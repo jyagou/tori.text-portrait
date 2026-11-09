@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Text Portrait</title>
+  <style>
+    body { margin: 0; background: #000; display: flex; justify-content: center; padding: 20px; }
+    canvas { max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <canvas id="out"></canvas>
+
+  <script>
+    const TEXT = "Hoy, babae! ";  // your message
+    const COLS = 160;              // more columns = more detail 140
+    const CELL_W = 8, CELL_H = 11; // size of each letter cell
+
+    const img = new Image();
+    img.src = "tori.jpeg";
+
+    img.onload = () => {
+      // 1. work out the grid size, keeping the photo's proportions
+      const rows = Math.round(COLS * (img.height / img.width) * (CELL_W / CELL_H));
+
+      // 2. shrink the photo to one pixel per grid cell
+      const small = document.createElement("canvas");
+      small.width = COLS;
+      small.height = rows;
+      const sctx = small.getContext("2d");
+      sctx.drawImage(img, 0, 0, COLS, rows);
+      const pixels = sctx.getImageData(0, 0, COLS, rows).data;
+
+      // 3. draw one letter per cell, brightness controls opacity
+      const out = document.getElementById("out");
+      out.width = COLS * CELL_W;
+      out.height = rows * CELL_H;
+      const ctx = out.getContext("2d");
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, out.width, out.height);
+      ctx.font = `bold ${CELL_H}px monospace`;
+      ctx.textBaseline = "top";
+
+      let n = 0;
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const i = (y * COLS + x) * 4;
+          const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+      let brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          brightness = Math.pow(brightness, 1.8);
+          if (brightness > 0.15) {
+            ctx.fillStyle = `rgba(255,255,255,${brightness})`;
+            ctx.fillText(TEXT[n % TEXT.length], x * CELL_W, y * CELL_H);
+          }
+          n++;
+        }
+      }
+    };
+  </script>
+</body>
+</html>
